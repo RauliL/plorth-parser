@@ -2,17 +2,23 @@
   "name": "plorth-parser",
   "version": "0.1.0",
   "description": "Parser for Plorth programming language",
-  "main": "index.js",
+  "main": "./lib/index",
+  "types": "./lib/index",
   "scripts": {
-    "test": "mocha"
+    "build": "tsc",
+    "watch": "tsc -w",
+    "test": "npm run build && mocha",
+    "prepublish": "npm run build"
   },
   "author": "Rauli Laine <rauli.laine@iki.fi>",
   "license": "BSD-2-Clause",
   "files": [
-    "index.js"
+    "./lib/*.d.ts",
+    "./lib/*.js"
   ],
   "devDependencies": {
     "mocha": "^3.5.0",
-    "should": "^12.0.0"
+    "should": "^12.0.0",
+    "typescript": "^2.5.3"
   }
 }
