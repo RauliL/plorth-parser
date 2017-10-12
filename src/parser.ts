@@ -1,14 +1,26 @@
+import {
+  PlorthArray,
+  PlorthObject,
+  PlorthQuote,
+  PlorthString,
+  PlorthSymbol,
+  PlorthValue,
+  PlorthValueType,
+  PlorthWord
+} from "./types";
+
 const SYMBOL_PATTERN = /[^()[\]{}:;,\s]/;
 
-module.exports = source => new Parser(source).parseProgram();
+export default class Parser {
+  source: string;
+  offset: number;
 
-class Parser {
-  constructor (source) {
+  constructor(source: string) {
     this.source = source;
     this.offset = 0;
   }
 
-  parseProgram () {
+  parseProgram(): PlorthValue[] {
     const values = [];
 
     while (this.offset < this.source.length) {
@@ -20,7 +32,7 @@ class Parser {
     return values;
   }
 
-  parseValue () {
+  parseValue(): PlorthValue {
     this.skipWhitespaceAndComments();
 
     switch (this.peek()) {
@@ -45,47 +57,61 @@ class Parser {
     }
   }
 
-  parseSymbol () {
-    let node;
+  parseSymbol(): PlorthSymbol {
+    let start;
+    let id;
 
     this.skipWhitespaceAndComments();
-    node = this.startNode("symbol", { id: null });
+    start = this.offset;
     if (!this.read(SYMBOL_PATTERN)) {
       throw this.error("Symbol expected");
     }
     while (this.read(SYMBOL_PATTERN));
-    this.endNode(node);
-    node.id = this.source.substring(node.start, node.end);
+    id = this.source.substring(start, this.offset);
 
-    return node;
+    return {
+      type: PlorthValueType.Symbol,
+      start,
+      end: this.offset,
+      id
+    };
   }
 
-  parseWord () {
-    let node;
+  parseWord(): PlorthWord {
+    let start;
+    let symbol;
+    const values = [];
 
     this.skipWhitespaceAndComments();
-    node = this.startNode("word", { symbol: null, values: [] });
+    start = this.offset;
     if (!this.read(":")) {
       throw this.error("Word expected");
     }
-    node.symbol = this.parseSymbol();
+    symbol = this.parseSymbol();
 
     for (;;) {
       this.skipWhitespaceAndComments();
       if (this.read(";")) {
         break;
       }
-      node.values.push(this.parseValue());
+      values.push(this.parseValue());
     }
 
-    return this.endNode(node);
+    return {
+      type: PlorthValueType.Word,
+      start,
+      end: this.offset,
+      symbol,
+      values
+    };
   }
 
-  parseQuote () {
-    let node;
+  parseQuote(): PlorthQuote {
+    let start;
+    const values = [];
 
     this.skipWhitespaceAndComments();
-    node = this.startNode("quote", { values: [] });
+    start = this.offset;
     if (!this.read("(")) {
       throw this.error("Quote value expected");
     }
@@ -95,17 +121,23 @@ class Parser {
       if (this.read(")")) {
         break;
       }
-      node.values.push(this.parseValue());
+      values.push(this.parseValue());
     }
 
-    return this.endNode(node);
+    return {
+      type: PlorthValueType.Quote,
+      start,
+      end: this.offset,
+      values
+    };
   }
 
-  parseArray () {
-    let node;
+  parseArray(): PlorthArray {
+    let start;
+    const elements = [];
 
     this.skipWhitespaceAndComments();
-    node = this.startNode("array", { elements: [] });
+    start = this.offset;
     if (!this.read("[")) {
       throw this.error("Array value expected");
     }
@@ -115,7 +147,7 @@ class Parser {
       if (this.read("]")) {
         break;
       }
-      node.elements.push(this.parseValue());
+      elements.push(this.parseValue());
       if (this.read(",")) {
         continue;
       } else if (this.read("]")) {
@@ -125,14 +157,20 @@ class Parser {
       }
     }
 
-    return this.endNode(node);
+    return {
+      type: PlorthValueType.Array,
+      start,
+      end: this.offset,
+      elements
+    };
   }
 
-  parseObject () {
-    let node;
+  parseObject(): PlorthObject {
+    let start;
+    const properties: { [key: string]: PlorthValue } = {};
 
     this.skipWhitespaceAndComments();
-    node = this.startNode("object", { properties: {} });
+    start = this.offset;
     if (!this.read("{")) {
       throw this.error("Object value expected");
     }
@@ -151,7 +189,7 @@ class Parser {
         throw this.error("Missing `:' after property key");
       }
       value = this.parseValue();
-      node.properties[key.value] = value;
+      properties[key.value] = value;
       if (this.read(",")) {
         continue;
       } else if (this.read("}")) {
@@ -161,15 +199,21 @@ class Parser {
       }
     }
 
-    return this.endNode(node);
+    return {
+      type: PlorthValueType.Object,
+      start,
+      end: this.offset,
+      properties
+    };
   }
 
-  parseString () {
-    let node;
+  parseString(): PlorthString {
     let separator;
+    let start;
+    let value = "";
 
     this.skipWhitespaceAndComments();
-    node = this.startNode("string", { value: "" });
+    start = this.offset;
     if ((separator = this.read()) !== "\"" && separator !== "'") {
       throw this.error("String value expected");
     }
@@ -179,16 +223,21 @@ class Parser {
       } else if (this.read(separator)) {
         break;
       } else if (this.read("\\")) {
-        node.value += this.parseEscapeSequence();
+        value += this.parseEscapeSequence();
       } else {
-        node.value += this.read();
+        value += this.read();
       }
     }
 
-    return this.endNode(node);
+    return {
+      type: PlorthValueType.String,
+      start,
+      end: this.offset,
+      value
+    };
   }
 
-  parseEscapeSequence () {
+  parseEscapeSequence(): string {
     const c = this.read();
 
     if (!c) {
@@ -241,7 +290,7 @@ class Parser {
     }
   }
 
-  skipWhitespaceAndComments () {
+  skipWhitespaceAndComments(): boolean {
     const originalOffset = this.offset;
 
     while (this.offset < this.source.length) {
@@ -257,7 +306,7 @@ class Parser {
     return originalOffset !== this.offset;
   }
 
-  peek (expected = null) {
+  peek(expected?: string | RegExp): string | null {
     if (this.offset < this.source.length) {
       const c = this.source[this.offset];
 
@@ -277,46 +326,17 @@ class Parser {
     return null;
   }
 
-  read (expected = null) {
-    if (this.offset < this.source.length) {
-      const c = this.source[this.offset++];
+  read(expected?: string | RegExp): string | null {
+    const c = this.peek(expected);
 
-      if (!expected) {
-        return c;
-      } else if (expected instanceof RegExp) {
-        if (expected.test(c)) {
-          return c;
-        }
-      } else if (expected === c) {
-        return c;
-      }
-      --this.offset;
+    if (c) {
+      ++this.offset;
     }
 
-    return null;
+    return c;
   }
 
-  error (message) {
-    const err = new Error(message);
-
-    err.offset = this.offset;
-
-    return err;
-  }
-
-  startNode (type, data = null) {
-    const node = { type, start: this.offset };
-
-    if (data) {
-      Object.assign(node, data);
-    }
-
-    return node;
-  }
-
-  endNode (node) {
-    node.end = this.offset;
-
-    return node;
+  error(message: string): SyntaxError {
+    return new Error(message); // TODO: Set the offset.
   }
 }

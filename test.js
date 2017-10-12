@@ -1,6 +1,6 @@
 /* eslint-env node, mocha */
 
-const parse = require("./index");
+const parse = require("./lib/index").default;
 const should = require("should");
 
 describe("Plorth parser", () => {
