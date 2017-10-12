@@ -1,6 +1,6 @@
 {
   "name": "plorth-parser",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Parser for Plorth programming language",
   "main": "./lib/index",
   "types": "./lib/index",
