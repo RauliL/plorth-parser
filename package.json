@@ -4,10 +4,17 @@
   "description": "Parser for Plorth programming language",
   "main": "./lib/index",
   "types": "./lib/index",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/RauliL/plorth-parser"
+  },
   "scripts": {
     "build": "tsc",
     "watch": "tsc -w",
-    "test": "npm run build && mocha",
+    "pretest": "npm run build",
+    "test": "istanbul cover _mocha -- --require source-map-support/register test.js",
+    "posttest": "istanbul check-coverage",
+    "coveralls": "cat ./coverage/lconv.info | coveralls",
     "prepublish": "npm run build"
   },
   "author": "Rauli Laine <rauli.laine@iki.fi>",
@@ -17,8 +24,11 @@
     "./lib/*.js"
   ],
   "devDependencies": {
+    "coveralls": "^3.0.0",
+    "istanbul": "^0.4.5",
     "mocha": "^3.5.0",
     "should": "^12.0.0",
+    "source-map-support": "^0.5.0",
     "typescript": "^2.5.3"
   }
 }
