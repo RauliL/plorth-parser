@@ -2,8 +2,8 @@
   "name": "plorth-parser",
   "version": "1.0.0",
   "description": "Parser for Plorth programming language",
-  "main": "./lib/index",
-  "types": "./lib/index",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "repository": {
     "type": "git",
     "url": "https://github.com/RauliL/plorth-parser.git"
@@ -24,8 +24,8 @@
   "author": "Rauli Laine <rauli.laine@iki.fi>",
   "license": "BSD-2-Clause",
   "files": [
-    "./lib/*.d.ts",
-    "./lib/*.js"
+    "./dist/*.d.ts",
+    "./dist/*.js"
   ],
   "devDependencies": {
     "coveralls": "^3.0.0",
