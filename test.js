@@ -1,6 +1,6 @@
 /* eslint-env node, mocha */
 
-const parse = require("./dist/index").default;
+const parse = require("./index").default;
 const should = require("should");
 
 describe("Plorth parser", () => {
@@ -27,9 +27,11 @@ describe("Plorth parser", () => {
 
     should.strictEqual(result.length, 1);
     should.strictEqual(result[0].type, "word");
-    should.strictEqual(result[0].values.length, 1);
-    should.strictEqual(result[0].values[0].type, "symbol");
-    should.strictEqual(result[0].values[0].id, "bar");
+    should.strictEqual(result[0].symbol.type, "symbol");
+    should.strictEqual(result[0].quote.type, "quote");
+    should.strictEqual(result[0].quote.values.length, 1);
+    should.strictEqual(result[0].quote.values[0].type, "symbol");
+    should.strictEqual(result[0].quote.values[0].id, "bar");
   });
 
   it("should be able to parse arrays", () => {
