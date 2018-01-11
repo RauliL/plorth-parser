@@ -4,14 +4,27 @@ import {
   PlorthQuote,
   PlorthString,
   PlorthSymbol,
+  PlorthWord,
   PlorthValue,
-  PlorthValueType,
-  PlorthWord
-} from "./types";
+  PlorthValueType
+} from "plorth-types";
 
 const SYMBOL_PATTERN = /[^()[\]{}:;,\s]/;
 
-export default class Parser {
+export default function parse(source: string): PlorthValue[] {
+  return new Parser(source).parseProgram();
+}
+
+export class SyntaxError extends Error {
+  offset: number;
+
+  constructor(offset: number, message: string) {
+    super(message);
+    this.offset = offset;
+  }
+}
+
+export class Parser {
   source: string;
   offset: number;
 
@@ -70,7 +83,7 @@ export default class Parser {
     id = this.source.substring(start, this.offset);
 
     return {
-      type: PlorthValueType.Symbol,
+      type: PlorthValueType.SYMBOL,
       start,
       end: this.offset,
       id
@@ -98,11 +111,16 @@ export default class Parser {
     }
 
     return {
-      type: PlorthValueType.Word,
+      type: PlorthValueType.WORD,
       start,
       end: this.offset,
       symbol,
-      values
+      quote: {
+        type: PlorthValueType.QUOTE,
+        start,
+        end: this.offset,
+        values
+      }
     };
   }
 
@@ -125,7 +143,7 @@ export default class Parser {
     }
 
     return {
-      type: PlorthValueType.Quote,
+      type: PlorthValueType.QUOTE,
       start,
       end: this.offset,
       values
@@ -158,7 +176,7 @@ export default class Parser {
     }
 
     return {
-      type: PlorthValueType.Array,
+      type: PlorthValueType.ARRAY,
       start,
       end: this.offset,
       elements
@@ -200,7 +218,7 @@ export default class Parser {
     }
 
     return {
-      type: PlorthValueType.Object,
+      type: PlorthValueType.OBJECT,
       start,
       end: this.offset,
       properties
@@ -230,14 +248,14 @@ export default class Parser {
     }
 
     return {
-      type: PlorthValueType.String,
+      type: PlorthValueType.STRING,
       start,
       end: this.offset,
       value
     };
   }
 
-  parseEscapeSequence(): string {
+  private parseEscapeSequence(): string {
     const c = this.read();
 
     if (!c) {
@@ -290,7 +308,7 @@ export default class Parser {
     }
   }
 
-  skipWhitespaceAndComments(): boolean {
+  private skipWhitespaceAndComments(): boolean {
     const originalOffset = this.offset;
 
     while (this.offset < this.source.length) {
@@ -306,7 +324,7 @@ export default class Parser {
     return originalOffset !== this.offset;
   }
 
-  peek(expected?: string | RegExp): string | null {
+  private peek(expected?: string | RegExp): string | null {
     if (this.offset < this.source.length) {
       const c = this.source[this.offset];
 
@@ -326,7 +344,7 @@ export default class Parser {
     return null;
   }
 
-  read(expected?: string | RegExp): string | null {
+  private read(expected?: string | RegExp): string | null {
     const c = this.peek(expected);
 
     if (c) {
@@ -337,6 +355,6 @@ export default class Parser {
   }
 
   error(message: string): SyntaxError {
-    return new Error(message); // TODO: Set the offset.
+    return new SyntaxError(this.offset, message);
   }
 }
