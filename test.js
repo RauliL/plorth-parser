@@ -35,24 +35,24 @@ describe("Plorth parser", () => {
   });
 
   it("should be able to parse arrays", () => {
-    const result = parse("[1, 2, 3]");
+    const result = parse("[ 1, true, [1, 2, 3], { \"a\": \"b\" } ]");
 
     should.strictEqual(result.length, 1);
     should.strictEqual(result[0].type, "array");
     should.exists(result[0].elements);
-    should.strictEqual(result[0].elements.length, 3);
+    should.strictEqual(result[0].elements.length, 4);
     should.strictEqual(result[0].elements[0].type, "symbol");
     should.strictEqual(result[0].elements[0].id, "1");
   });
 
   it("should be able to parse objects", () => {
-    const result = parse("{\"foo\": \"bar\"}");
+    const result = parse("{ \"a\": 1, \"b\": true, \"c\": [1, 2, 3] }");
 
     should.strictEqual(result.length, 1);
     should.strictEqual(result[0].type, "object");
     should.exists(result[0].properties);
-    should.exists(result[0].properties.foo);
-    should.strictEqual(result[0].properties.foo.type, "string");
+    should.exists(result[0].properties.a);
+    should.strictEqual(result[0].properties.a.type, "symbol");
   });
 
   it("should be able to parse strings", () => {
