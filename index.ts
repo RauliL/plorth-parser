@@ -166,6 +166,7 @@ export class Parser {
         break;
       }
       elements.push(this.parseValue());
+      this.skipWhitespaceAndComments();
       if (this.read(",")) {
         continue;
       } else if (this.read("]")) {
@@ -208,6 +209,7 @@ export class Parser {
       }
       value = this.parseValue();
       properties[key.value] = value;
+      this.skipWhitespaceAndComments();
       if (this.read(",")) {
         continue;
       } else if (this.read("}")) {
